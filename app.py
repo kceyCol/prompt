@@ -111,5 +111,87 @@ def gerar_prompt():
     
     return jsonify({'prompt': prompt_gerado})
 
+@app.route('/config')  
+def config():
+    return render_template('config.html')
+
+@app.route('/api/prompts/<categoria>')
+def listar_prompts(categoria):
+    # Verificar se a categoria existe
+    if categoria not in PROMPTS_TIPOS:
+        return jsonify({'erro': 'Categoria não encontrada'}), 404
+    
+    # Obter lista de arquivos de prompt na categoria
+    pasta_categoria = os.path.join(app.config['PROMPTS_FOLDER'], categoria)
+    prompts = []
+    
+    for tipo in PROMPTS_TIPOS[categoria]:
+        arquivo = f"{tipo}.txt"
+        caminho_completo = os.path.join(pasta_categoria, arquivo)
+        
+        if os.path.exists(caminho_completo):
+            # Formatar o nome para exibição (substituir _ por espaço e capitalizar)
+            nome_exibicao = tipo.replace('_', ' ').title()
+            prompts.append({
+                'nome': nome_exibicao,
+                'arquivo': tipo
+            })
+    
+    return jsonify(prompts)
+
+@app.route('/api/prompt/<categoria>/<tipo>')
+def obter_prompt(categoria, tipo):
+    # Verificar se a categoria existe
+    if categoria not in PROMPTS_TIPOS:
+        return jsonify({'erro': 'Categoria não encontrada'}), 404
+    
+    # Verificar se o tipo existe na categoria
+    if tipo not in PROMPTS_TIPOS[categoria]:
+        return jsonify({'erro': 'Tipo de prompt não encontrado nesta categoria'}), 404
+    
+    # Carregar o conteúdo do prompt
+    conteudo = carregar_prompt(categoria, tipo)
+    
+    if conteudo is None:
+        return jsonify({'erro': 'Arquivo de prompt não encontrado'}), 404
+    
+    # Formatar o nome para exibição
+    nome_exibicao = tipo.replace('_', ' ').title()
+    
+    return jsonify({
+        'nome': nome_exibicao,
+        'arquivo': tipo,
+        'conteudo': conteudo
+    })
+
+@app.route('/api/prompt/<categoria>/<tipo>', methods=['POST'])
+def salvar_prompt(categoria, tipo):
+    # Verificar se a categoria existe
+    if categoria not in PROMPTS_TIPOS:
+        return jsonify({'erro': 'Categoria não encontrada'}), 404
+    
+    # Verificar se o tipo existe na categoria
+    if tipo not in PROMPTS_TIPOS[categoria]:
+        return jsonify({'erro': 'Tipo de prompt não encontrado nesta categoria'}), 404
+    
+    # Obter o conteúdo enviado
+    dados = request.json
+    if not dados or 'conteudo' not in dados:
+        return jsonify({'erro': 'Conteúdo não fornecido'}), 400
+    
+    conteudo = dados['conteudo']
+    
+    # Caminho do arquivo
+    caminho_arquivo = os.path.join(app.config['PROMPTS_FOLDER'], categoria, f"{tipo}.txt")
+    
+    try:
+        # Salvar o conteúdo no arquivo
+        with open(caminho_arquivo, 'w', encoding='utf-8') as arquivo:
+            arquivo.write(conteudo)
+        
+        return jsonify({'sucesso': True})
+    except Exception as e:
+        return jsonify({'erro': f'Erro ao salvar arquivo: {str(e)}'}), 500
+
 if __name__ == '__main__':
     app.run(debug=True)
