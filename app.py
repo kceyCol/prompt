@@ -1,53 +1,62 @@
 from flask import Flask, render_template, request, jsonify
 import os
 from werkzeug.utils import secure_filename
-import PyPDF2
+import fitz  # PyMuPDF
 from io import BytesIO
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 app.config['UPLOAD_FOLDER'] = 'uploads'
+app.config['PROMPTS_FOLDER'] = 'prompts'
 
 # Criar pasta de uploads se não existir
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
 
-# ... existing code ...
-PROMPTS_RESUMO = {
-    'geral': {
-        'simples': 'Faça um resumo breve e objetivo do texto a seguir.',
-        'analitico': 'Leia o texto abaixo e produza um resumo destacando os principais argumentos, causas e consequências.',
-        'critico': 'Resuma o texto a seguir e inclua uma análise crítica dos pontos fortes e fracos apresentados.',
-        'topicos': 'Gere um resumo do texto abaixo em formato de tópicos, listando as ideias principais.',
-        'apresentacao': 'Crie um resumo do texto a seguir, adaptado para ser apresentado oralmente de forma clara e concisa.',
-        'academico': 'Elabore um resumo acadêmico do texto, seguindo as normas da ABNT e destacando objetivo, metodologia, resultados e conclusão.'
-    },
-    'medicina': {
-        'clinico': 'Faça um resumo clínico do caso apresentado, destacando sintomas, diagnóstico, tratamento e prognóstico.',
-        'cientifico': 'Resuma o artigo científico abaixo, enfatizando objetivo, metodologia, resultados e conclusões relevantes para a prática médica.',
-        'prontuario': 'Elabore um resumo de prontuário médico, destacando histórico, exames realizados e condutas adotadas.'
-    },
-    'direito': {
-        'juridico': 'Elabore um resumo jurídico do texto, destacando os principais argumentos, fundamentos legais e decisões judiciais citadas.',
-        'legislacao': 'Resuma a legislação apresentada, apontando os pontos-chave e possíveis impactos práticos.',
-        'jurisprudencia': 'Faça um resumo da jurisprudência citada, destacando a tese jurídica e sua aplicabilidade.'
-    },
-    'licitacoes': {
-        'edital': 'Faça um resumo do edital de licitação, destacando objeto, critérios de participação, prazos e principais exigências.',
-        'processo': 'Resuma o processo licitatório descrito, indicando etapas, documentos necessários e critérios de julgamento.',
-        'contrato': 'Elabore um resumo do contrato administrativo, destacando objeto, prazo, valor e principais cláusulas.'
-    }
+# Criar pasta de prompts se não existir
+if not os.path.exists(app.config['PROMPTS_FOLDER']):
+    os.makedirs(app.config['PROMPTS_FOLDER'])
+    # Criar subpastas para cada categoria
+    for categoria in ['geral', 'medicina', 'direito', 'licitacoes']:
+        os.makedirs(os.path.join(app.config['PROMPTS_FOLDER'], categoria), exist_ok=True)
+
+# Estrutura para armazenar os tipos de prompts disponíveis por categoria
+PROMPTS_TIPOS = {
+    'geral': ['simples', 'analitico', 'critico', 'topicos', 'apresentacao', 'academico'],
+    'medicina': ['artigo_cientifico', 'relato_caso', 'pico', 'tecnica_cirurgica', 
+                'guideline', 'journal_club', 'estado_arte', 'impacto_clinico', 'translacional'],
+    'direito': ['juridico', 'legislacao', 'jurisprudencia'],
+    'licitacoes': ['edital', 'processo', 'contrato']
 }
 
+def carregar_prompt(categoria, tipo):
+    """Carrega o prompt de um arquivo externo"""
+    caminho_arquivo = os.path.join(app.config['PROMPTS_FOLDER'], categoria, f"{tipo}.txt")
+    
+    # Se o arquivo existir, carrega o conteúdo
+    if os.path.exists(caminho_arquivo):
+        try:
+            with open(caminho_arquivo, 'r', encoding='utf-8') as arquivo:
+                return arquivo.read().strip()
+        except Exception as e:
+            print(f"Erro ao ler arquivo de prompt {caminho_arquivo}: {str(e)}")
+            return None
+    
+    # Se o arquivo não existir, retorna None
+    return None
+
 def extrair_texto_pdf(arquivo_pdf):
-    """Extrai texto de um arquivo PDF"""
+    """Extrai texto de um arquivo PDF usando PyMuPDF"""
     try:
-        pdf_reader = PyPDF2.PdfReader(arquivo_pdf)
+        # Abrir o PDF com PyMuPDF
+        documento = fitz.open(stream=arquivo_pdf.read(), filetype="pdf")
         texto_completo = ""
         
-        for pagina in pdf_reader.pages:
-            texto_completo += pagina.extract_text() + "\n"
+        # Extrair texto de cada página
+        for pagina in documento:
+            texto_completo += pagina.get_text() + "\n"
         
+        documento.close()
         return texto_completo.strip()
     except Exception as e:
         return f"Erro ao extrair texto do PDF: {str(e)}"
@@ -68,8 +77,8 @@ def upload_pdf():
     
     if arquivo and arquivo.filename.lower().endswith('.pdf'):
         try:
-            # Extrair texto diretamente do arquivo em memória
-            texto_extraido = extrair_texto_pdf(BytesIO(arquivo.read()))
+            # Extrair texto diretamente do arquivo
+            texto_extraido = extrair_texto_pdf(arquivo)
             
             if texto_extraido.startswith("Erro"):
                 return jsonify({'erro': texto_extraido}), 500
@@ -87,20 +96,18 @@ def upload_pdf():
 @app.route('/gerar_prompt', methods=['POST'])
 def gerar_prompt():
     dados = request.json
-    categoria = dados.get('categoria', 'geral')
-    tipo = dados.get('tipo', 'simples')
-    texto_extraido = dados.get('texto', '')
+    categoria = dados.get('categoria', 'medicina')  # Alterado para 'medicina' como padrão
+    tipo = dados.get('tipo', 'artigo_cientifico')  # Alterado para 'artigo_cientifico' como padrão
     
-    # Busca o prompt correspondente
-    if categoria in PROMPTS_RESUMO and tipo in PROMPTS_RESUMO[categoria]:
-        prompt_base = PROMPTS_RESUMO[categoria][tipo]
-        
-        if texto_extraido:
-            prompt_gerado = f"{prompt_base}\n\n{texto_extraido}"
-        else:
-            prompt_gerado = f"{prompt_base}\n\n[Insira aqui o texto a ser resumido]"
-    else:
-        prompt_gerado = "Prompt não encontrado para a categoria e tipo selecionados."
+    # Tenta carregar o prompt do arquivo externo
+    prompt_base = carregar_prompt(categoria, tipo)
+    
+    # Se não encontrar o arquivo ou ocorrer erro na leitura, usa um prompt padrão
+    if prompt_base is None:
+        prompt_base = "Faça um resumo do texto a seguir."
+        print(f"Aviso: Prompt não encontrado para {categoria}/{tipo}. Usando prompt padrão.")
+    
+    prompt_gerado = f"{prompt_base}\n\n[Insira aqui o texto a ser resumido ou anexe o arquivo PDF]"
     
     return jsonify({'prompt': prompt_gerado})
 

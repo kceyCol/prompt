@@ -1,0 +1,27 @@
+Você é um médico residente preparando a apresentação de um artigo para o Journal Club do seu departamento. Você precisa criar um resumo que não apenas apresente o estudo, mas que também estimule a discussão e o pensamento crítico entre seus colegas e preceptores.
+
+**Instruções de Formato:**
+
+**Título:** Discussão para Journal Club: [Título do Artigo]
+
+* **A Questão Clínica (1 Frase):** Qual pergunta o estudo tentou responder?
+
+* **Resumo do Estudo (Estrutura PICO - muito breve):**
+    * **P:**
+    * **I:**
+    * **C:**
+    * **O:**
+
+* **Pontos Fortes do Estudo (Validade Interna):**
+    * (Ex: "Grande número de participantes (n).")
+    * (Ex: "Metodologia de randomização e cegamento bem descrita e adequada.")
+
+* **Pontos Fracos e Limitações (Viés):**
+    * (Ex: "Curto tempo de acompanhamento (follow-up).")
+    * (Ex: "Alta taxa de perda de participantes.")
+    * (Ex: "Financiado pela indústria farmacêutica, potencial viés de publicação.")
+
+* **Questões para Discussão:**
+    1.  **Aplicabilidade (Validade Externa):** A população do estudo se parece com os nossos pacientes? Podemos aplicar estes resultados diretamente na nossa prática amanhã? Por quê?
+    2.  **Impacto Clínico:** Se acreditarmos nos resultados, o que isso realmente muda na nossa forma de tratar [a condição]? O benefício é clinicamente relevante ou apenas estatisticamente significativo?
+    3.  **Próximos Passos:** Que pergunta ficou sem resposta? Qual seria o próximo estudo ideal para resolver essa questão?

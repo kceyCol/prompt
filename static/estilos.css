@@ -1,0 +1,87 @@
+.btn-copiar { background-color: #A3B8A0; border-color: #A3B8A0; color: white; }
+.btn-copiar:hover { background-color: #7a9177; border-color: #7a9177; color: white; }
+
+.btn-gemini { background-color: #005F6B; border-color: #005F6B; color: white; }
+.btn-gemini:hover { background-color: #003d45; border-color: #003d45; color: white; }
+
+.btn-chatgpt { background-color: #EAD2C2; border-color: #EAD2C2; color: #333; }
+.btn-chatgpt:hover { background-color: #dbb89e; border-color: #dbb89e; color: #222; }
+
+.btn-deepseek { background-color: #B86B5E; border-color: #B86B5E; color: white; }
+.btn-deepseek:hover { background-color: #954a3c; border-color: #954a3c; color: white; }
+
+.btn-claude { background-color: #D4A05D; border-color: #D4A05D; color: white; }
+.btn-claude:hover { background-color: #b8853a; border-color: #b8853a; color: white; }
+
+.btn-perplexity { background-color: #4A4A4A; border-color: #4A4A4A; color: white; }
+.btn-perplexity:hover { background-color: #2a2a2a; border-color: #2a2a2a; color: white; }
+
+.btn-manus { background-color: #F7F5F2; border-color: #F7F5F2; color: #333; }
+.btn-manus:hover { background-color: #e8e3dc; border-color: #e8e3dc; color: #222; }
+
+.tipo-card {
+    cursor: pointer;
+    transition: all 0.3s;
+    height: 100%;
+    border: 2px solid transparent;
+    background-color: #f8f9fa;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.tipo-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    background-color: #e9ecef;
+}
+
+.tipo-card.selected {
+    border-color: #0d6efd;
+    background-color: #e7f1ff;
+}
+
+.card-icon {
+    font-size: 2rem;
+    margin-bottom: 10px;
+    color: #0d6efd;
+}
+
+
+/* Estilos para o popup */
+.card-tooltip {
+    position: relative;
+}
+
+.card-tooltip .tooltip-text {
+    visibility: hidden;
+    width: 250px;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 10px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -125px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-size: 0.85rem;
+    pointer-events: none;
+}
+
+.card-tooltip .tooltip-text::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: rgba(0, 0, 0, 0.8) transparent transparent transparent;
+}
+
+.card-tooltip:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
