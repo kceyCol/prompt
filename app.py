@@ -1,14 +1,19 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash
 import os
 from werkzeug.utils import secure_filename
-# Removido: import fitz  # PyMuPDF
 from io import BytesIO
 import socket
+import json
+import bcrypt
+from datetime import datetime
+from functools import wraps
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['PROMPTS_FOLDER'] = 'prompts'
+app.config['USERS_FILE'] = 'users.json'
+app.secret_key = 'sua_chave_secreta_aqui_mude_em_producao'  # Mude em produção!
 
 # Criar pasta de uploads se não existir
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
@@ -30,6 +35,45 @@ PROMPTS_TIPOS = {
     'licitacoes': ['edital', 'processo', 'contrato']
 }
 
+# Funções de autenticação
+def carregar_usuarios():
+    """Carrega usuários do arquivo JSON"""
+    if os.path.exists(app.config['USERS_FILE']):
+        try:
+            with open(app.config['USERS_FILE'], 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"Erro ao carregar usuários: {e}")
+            return {}
+    return {}
+
+def salvar_usuarios(usuarios):
+    """Salva usuários no arquivo JSON"""
+    try:
+        with open(app.config['USERS_FILE'], 'w', encoding='utf-8') as f:
+            json.dump(usuarios, f, indent=2, ensure_ascii=False)
+        return True
+    except Exception as e:
+        print(f"Erro ao salvar usuários: {e}")
+        return False
+
+def hash_senha(senha):
+    """Gera hash da senha"""
+    return bcrypt.hashpw(senha.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+def verificar_senha(senha, hash_senha):
+    """Verifica se a senha confere com o hash"""
+    return bcrypt.checkpw(senha.encode('utf-8'), hash_senha.encode('utf-8'))
+
+def login_required(f):
+    """Decorator para proteger rotas que requerem login"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
 def carregar_prompt(categoria, tipo):
     """Carrega o prompt de um arquivo externo"""
     caminho_arquivo = os.path.join(app.config['PROMPTS_FOLDER'], categoria, f"{tipo}.txt")
@@ -46,19 +90,119 @@ def carregar_prompt(categoria, tipo):
     # Se o arquivo não existir, retorna None
     return None
 
-# Removida função extrair_texto_pdf
+# Rotas de autenticação
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        dados = request.get_json() if request.is_json else request.form
+        email = dados.get('email', '').strip().lower()
+        senha = dados.get('senha', '')
+        
+        if not email or not senha:
+            if request.is_json:
+                return jsonify({'erro': 'Email e senha são obrigatórios'}), 400
+            flash('Email e senha são obrigatórios', 'error')
+            return render_template('login.html')
+        
+        usuarios = carregar_usuarios()
+        
+        if email in usuarios and verificar_senha(senha, usuarios[email]['senha']):
+            session['user_id'] = email
+            session['user_name'] = usuarios[email]['nome']
+            
+            # Atualizar último login
+            usuarios[email]['ultimo_login'] = datetime.now().isoformat()
+            salvar_usuarios(usuarios)
+            
+            if request.is_json:
+                return jsonify({'sucesso': True, 'redirect': url_for('index')})
+            return redirect(url_for('index'))
+        else:
+            if request.is_json:
+                return jsonify({'erro': 'Email ou senha incorretos'}), 401
+            flash('Email ou senha incorretos', 'error')
+    
+    return render_template('login.html')
 
+@app.route('/registro', methods=['GET', 'POST'])
+def registro():
+    if request.method == 'POST':
+        dados = request.get_json() if request.is_json else request.form
+        nome = dados.get('nome', '').strip()
+        email = dados.get('email', '').strip().lower()
+        senha = dados.get('senha', '')
+        confirmar_senha = dados.get('confirmar_senha', '')
+        
+        # Validações
+        if not all([nome, email, senha, confirmar_senha]):
+            erro = 'Todos os campos são obrigatórios'
+            if request.is_json:
+                return jsonify({'erro': erro}), 400
+            flash(erro, 'error')
+            return render_template('registro.html')
+        
+        if senha != confirmar_senha:
+            erro = 'As senhas não conferem'
+            if request.is_json:
+                return jsonify({'erro': erro}), 400
+            flash(erro, 'error')
+            return render_template('registro.html')
+        
+        if len(senha) < 6:
+            erro = 'A senha deve ter pelo menos 6 caracteres'
+            if request.is_json:
+                return jsonify({'erro': erro}), 400
+            flash(erro, 'error')
+            return render_template('registro.html')
+        
+        usuarios = carregar_usuarios()
+        
+        if email in usuarios:
+            erro = 'Este email já está cadastrado'
+            if request.is_json:
+                return jsonify({'erro': erro}), 400
+            flash(erro, 'error')
+            return render_template('registro.html')
+        
+        # Criar novo usuário
+        usuarios[email] = {
+            'nome': nome,
+            'senha': hash_senha(senha),
+            'data_criacao': datetime.now().isoformat(),
+            'ultimo_login': None
+        }
+        
+        if salvar_usuarios(usuarios):
+            if request.is_json:
+                return jsonify({'sucesso': True, 'mensagem': 'Usuário criado com sucesso'})
+            flash('Usuário criado com sucesso! Faça login para continuar.', 'success')
+            return redirect(url_for('login'))
+        else:
+            erro = 'Erro ao criar usuário. Tente novamente.'
+            if request.is_json:
+                return jsonify({'erro': erro}), 500
+            flash(erro, 'error')
+    
+    return render_template('registro.html')
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    flash('Logout realizado com sucesso!', 'success')
+    return redirect(url_for('login'))
+
+# Rotas principais (protegidas)
 @app.route('/')
+@login_required
 def index():
-    return render_template('index.html')
-
-# Removida rota /upload_pdf
+    return render_template('index.html', user_name=session.get('user_name'))
 
 @app.route('/gerar_prompt', methods=['POST'])
+@login_required
 def gerar_prompt():
     dados = request.json
-    categoria = dados.get('categoria', 'medicina')  # Alterado para 'medicina' como padrão
-    tipo = dados.get('tipo', 'artigo_cientifico')  # Alterado para 'artigo_cientifico' como padrão
+    categoria = dados.get('categoria', 'medicina')
+    tipo = dados.get('tipo', 'artigo_cientifico')
     
     # Tenta carregar o prompt do arquivo externo
     prompt_base = carregar_prompt(categoria, tipo)
@@ -73,10 +217,12 @@ def gerar_prompt():
     return jsonify({'prompt': prompt_gerado})
 
 @app.route('/config')
+@login_required
 def config():
-    return render_template('config.html')
+    return render_template('config.html', user_name=session.get('user_name'))
 
 @app.route('/api/prompts/<categoria>')
+@login_required
 def listar_prompts(categoria):
     """Lista todos os prompts disponíveis para uma categoria"""
     if categoria not in PROMPTS_TIPOS:
@@ -95,6 +241,7 @@ def listar_prompts(categoria):
     return jsonify({'prompts': prompts})
 
 @app.route('/api/prompt/<categoria>/<tipo>')
+@login_required
 def obter_prompt(categoria, tipo):
     """Obtém o conteúdo de um prompt específico"""
     if categoria not in PROMPTS_TIPOS or tipo not in PROMPTS_TIPOS[categoria]:
@@ -107,6 +254,7 @@ def obter_prompt(categoria, tipo):
     return jsonify({'conteudo': conteudo})
 
 @app.route('/api/prompt/<categoria>/<tipo>', methods=['POST'])
+@login_required
 def salvar_prompt(categoria, tipo):
     """Salva o conteúdo de um prompt"""
     if categoria not in PROMPTS_TIPOS or tipo not in PROMPTS_TIPOS[categoria]:
@@ -129,6 +277,7 @@ def salvar_prompt(categoria, tipo):
         return jsonify({'erro': f'Erro ao salvar prompt: {str(e)}'}), 500
 
 @app.route('/api/server-info')
+@login_required
 def server_info():
     """Retorna informações do servidor"""
     try:
@@ -168,3 +317,4 @@ def server_info():
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
+    
