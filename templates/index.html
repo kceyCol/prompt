@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="/static/estilos.css">
 </head>
 <body>
-    <div class="container py-4">
+    <div class="container-fluid py-4">
         <!-- Header com informações do usuário -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1 class="text-center">PromptMaker</h1>
@@ -24,109 +24,122 @@
             </div>
         </div>
         
-        <!-- Resto do conteúdo existente -->
         <h1 class="mb-4 text-center">Gerador de Prompts para Resumos Médicos</h1>
         
-        <!-- Seção de Configuração do Prompt -->
-        <div class="card p-4 shadow-sm">
-            <h5 class="mb-3">Selecione o tipo de resumo médico:</h5>
-            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-4">
-                <div class="col">
-                    <div class="card tipo-card selected card-tooltip" data-tipo="artigo_cientifico" data-descricao="Este prompt é ideal para estudos de pesquisa, como ensaios clínicos, estudos de coorte ou caso-controle. Ele força a IA a seguir a estrutura padrão de um artigo científico.">
-                        <div class="tooltip-text">Este prompt é ideal para estudos de pesquisa, como ensaios clínicos, estudos de coorte ou caso-controle. Ele força a IA a seguir a estrutura padrão de um artigo científico.</div>
-                        <div class="card-body text-center">
-                            <div class="card-icon">📊</div>
-                            <h5 class="card-title">Resumo Estruturado de Artigo Científico</h5>
+        <!-- Layout de duas colunas -->
+        <div class="row">
+            <!-- Coluna da esquerda - Cards de seleção -->
+            <div class="col-lg-6 col-md-12">
+                <div class="card p-4 shadow-sm h-100">
+                    <h5 class="mb-3">Selecione o tipo de resumo médico:</h5>
+                    <div class="row row-cols-1 row-cols-md-2 g-3">
+                        <div class="col">
+                            <div class="card tipo-card selected card-tooltip" data-tipo="artigo_cientifico" data-descricao="Este prompt é ideal para estudos de pesquisa, como ensaios clínicos, estudos de coorte ou caso-controle. Ele força a IA a seguir a estrutura padrão de um artigo científico.">
+                                <div class="tooltip-text">Este prompt é ideal para estudos de pesquisa, como ensaios clínicos, estudos de coorte ou caso-controle. Ele força a IA a seguir a estrutura padrão de um artigo científico.</div>
+                                <div class="card-body text-center p-2">
+                                    <div class="card-icon">📊</div>
+                                    <h6 class="card-title mb-0">Resumo Estruturado de Artigo Científico</h6>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="card tipo-card card-tooltip" data-tipo="relato_caso">
-                        <div class="tooltip-text">Este prompt é focado em extrair a narrativa clínica de um relato de caso, ideal para médicos, residentes e estudantes de medicina.</div>
-                        <div class="card-body text-center">
-                            <div class="card-icon">👨‍⚕️</div>
-                            <h5 class="card-title">Resumo de Relato de Caso Clínico</h5>
+                        <div class="col">
+                            <div class="card tipo-card card-tooltip" data-tipo="relato_caso">
+                                <div class="tooltip-text">Este prompt é focado em extrair a narrativa clínica de um relato de caso, ideal para médicos, residentes e estudantes de medicina.</div>
+                                <div class="card-body text-center p-2">
+                                    <div class="card-icon">👨‍⚕️</div>
+                                    <h6 class="card-title mb-0">Resumo de Relato de Caso Clínico</h6>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="card tipo-card card-tooltip" data-tipo="pico">
-                        <div class="tooltip-text">Este formato é perfeito para quando um clínico precisa de uma resposta rápida sobre uma intervenção, baseada em evidências. Formato PICO (Paciente/Problema, Intervenção, Comparação, Outcome/Desfecho).</div>
-                        <div class="card-body text-center">
-                            <div class="card-icon">🎯</div>
-                            <h5 class="card-title">Resumo "Direto ao Ponto" (PICO)</h5>
+                        <div class="col">
+                            <div class="card tipo-card card-tooltip" data-tipo="pico">
+                                <div class="tooltip-text">Este formato é perfeito para quando um clínico precisa de uma resposta rápida sobre uma intervenção, baseada em evidências. Formato PICO (Paciente/Problema, Intervenção, Comparação, Outcome/Desfecho).</div>
+                                <div class="card-body text-center p-2">
+                                    <div class="card-icon">🎯</div>
+                                    <h6 class="card-title mb-0">Resumo \"Direto ao Ponto\" (PICO)</h6>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="card tipo-card card-tooltip" data-tipo="tecnica_cirurgica">
-                        <div class="tooltip-text">Essencial para cirurgiões se preparando para um procedimento, especialmente um que não realizam com frequência. O foco é na sequência de ações e nos pontos críticos.</div>
-                        <div class="card-body text-center">
-                            <div class="card-icon">🔪</div>
-                            <h5 class="card-title">Resumo de Técnica Cirúrgica</h5>
+                        <div class="col">
+                            <div class="card tipo-card card-tooltip" data-tipo="tecnica_cirurgica">
+                                <div class="tooltip-text">Essencial para cirurgiões se preparando para um procedimento, especialmente um que não realizam com frequência. O foco é na sequência de ações e nos pontos críticos.</div>
+                                <div class="card-body text-center p-2">
+                                    <div class="card-icon">🔪</div>
+                                    <h6 class="card-title mb-0">Resumo de Técnica Cirúrgica</h6>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="card tipo-card card-tooltip" data-tipo="guideline">
-                        <div class="tooltip-text">Diretrizes de sociedades médicas podem ser longas e densas. Este resumo extrai apenas as recomendações, classificadas por força de evidência.</div>
-                        <div class="card-body text-center">
-                            <div class="card-icon">📝</div>
-                            <h5 class="card-title">Resumo de Guideline Clínico</h5>
+                        <div class="col">
+                            <div class="card tipo-card card-tooltip" data-tipo="guideline">
+                                <div class="tooltip-text">Diretrizes de sociedades médicas podem ser longas e densas. Este resumo extrai apenas as recomendações, classificadas por força de evidência.</div>
+                                <div class="card-body text-center p-2">
+                                    <div class="card-icon">📝</div>
+                                    <h6 class="card-title mb-0">Resumo de Guideline Clínico</h6>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="card tipo-card card-tooltip" data-tipo="journal_club">
-                        <div class="tooltip-text">Este formato é desenhado para fomentar a discussão e a análise crítica de um artigo, indo além do simples resumo dos fatos.</div>
-                        <div class="card-body text-center">
-                            <div class="card-icon">👥</div>
-                            <h5 class="card-title">Resumo para "Journal Club"</h5>
+                        <div class="col">
+                            <div class="card tipo-card card-tooltip" data-tipo="journal_club">
+                                <div class="tooltip-text">Este formato é desenhado para fomentar a discussão e a análise crítica de um artigo, indo além do simples resumo dos fatos.</div>
+                                <div class="card-body text-center p-2">
+                                    <div class="card-icon">👥</div>
+                                    <h6 class="card-title mb-0">Resumo para \"Journal Club\"</h6>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="card tipo-card card-tooltip" data-tipo="estado_arte">
-                        <div class="tooltip-text">Artigos de revisão (sejam narrativos ou sistemáticos) são a principal fonte de atualização para clínicos. Este resumo organiza o conhecimento consolidado, as controvérsias e o que está por vir.</div>
-                        <div class="card-body text-center">
-                            <div class="card-icon">🔍</div>
-                            <h5 class="card-title">Resumo de "Estado da Arte"</h5>
+                        <div class="col">
+                            <div class="card tipo-card card-tooltip" data-tipo="estado_arte">
+                                <div class="tooltip-text">Artigos de revisão (sejam narrativos ou sistemáticos) são a principal fonte de atualização para clínicos. Este resumo organiza o conhecimento consolidado, as controvérsias e o que está por vir.</div>
+                                <div class="card-body text-center p-2">
+                                    <div class="card-icon">🔍</div>
+                                    <h6 class="card-title mb-0">Resumo de \"Estado da Arte\"</h6>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="card tipo-card card-tooltip" data-tipo="impacto_clinico">
-                        <div class="tooltip-text">Quando um estudo "practice-changing" é publicado, os médicos não querem saber apenas o p-valor. Eles querem saber: "O quão grande é o benefício? Para quem? E a que custo (efeitos adversos)?" Este resumo foca nisso.</div>
-                        <div class="card-body text-center">
-                            <div class="card-icon">💉</div>
-                            <h5 class="card-title">Resumo de Impacto Clínico Prático</h5>
+                        <div class="col">
+                            <div class="card tipo-card card-tooltip" data-tipo="impacto_clinico">
+                                <div class="tooltip-text">Quando um estudo \"practice-changing\" é publicado, os médicos não querem saber apenas o p-valor. Eles querem saber: \"O quão grande é o benefício? Para quem? E a que custo (efeitos adversos)?\" Este resumo foca nisso.</div>
+                                <div class="card-body text-center p-2">
+                                    <div class="card-icon">💉</div>
+                                    <h6 class="card-title mb-0">Resumo de Impacto Clínico Prático</h6>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="card tipo-card card-tooltip" data-tipo="translacional">
-                        <div class="tooltip-text">Clínicos geralmente não têm tempo para ler artigos de ciência básica. Este resumo faz a ponte, extraindo o potencial clínico futuro de uma pesquisa feita em laboratório ou em modelos animais.</div>
-                        <div class="card-body text-center">
-                            <div class="card-icon">🔬</div>
-                            <h5 class="card-title">Resumo "Da Bancada à Beira do Leito"</h5>
+                        <div class="col">
+                            <div class="card tipo-card card-tooltip" data-tipo="translacional">
+                                <div class="tooltip-text">Clínicos geralmente não têm tempo para ler artigos de ciência básica. Este resumo faz a ponte, extraindo o potencial clínico futuro de uma pesquisa feita em laboratório ou em modelos animais.</div>
+                                <div class="card-body text-center p-2">
+                                    <div class="card-icon">🔬</div>
+                                    <h6 class="card-title mb-0">Resumo \"Da Bancada à Beira do Leito\"</h6>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
             
-            <button id="btnGerar" class="btn btn-primary w-100 mb-3">Gerar Prompt</button>
-            <div class="mt-3">
-                <label class="form-label">Prompt Gerado:</label>
-                <textarea id="outputPrompt" class="form-control" rows="6" readonly></textarea>
-            </div>
-            <div class="mt-3 d-flex flex-wrap gap-2" id="botoesAcoes" style="display:none;">
-                <button id="btnCopiar" class="btn btn-copiar">Copiar Prompt</button>
-                <button class="btn btn-gemini" onclick="abrirIA('gemini')">Abrir Gemini</button>
-                <button class="btn btn-chatgpt" onclick="abrirIA('chatgpt')">Abrir ChatGPT</button>
-                <button class="btn btn-deepseek" onclick="abrirIA('deepseek')">Abrir DeepSeek</button>
-                <button class="btn btn-claude" onclick="abrirIA('claude')">Abrir Claude</button>
-                <button class="btn btn-perplexity" onclick="abrirIA('perplexity')">Abrir Perplexity</button>
-                <button class="btn btn-manus" onclick="abrirIA('manus')">Abrir Manus</button>
+            <!-- Coluna da direita - Prompt gerado -->
+            <div class="col-lg-6 col-md-12">
+                <div class="card p-4 shadow-sm h-100">
+                    <h5 class="mb-3">Prompt Gerado:</h5>
+                    <div id="loadingIndicator" class="text-center mb-3" style="display:none;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Carregando...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Gerando prompt...</p>
+                    </div>
+                    <textarea id="outputPrompt" class="form-control mb-3" rows="15" readonly placeholder="Clique em um dos cards à esquerda para gerar automaticamente o prompt correspondente."></textarea>
+                    
+                    <div class="d-flex flex-wrap gap-2" id="botoesAcoes" style="display:none;">
+                        <button id="btnCopiar" class="btn btn-copiar">Copiar Prompt</button>
+                        <button class="btn btn-gemini" onclick="abrirIA('gemini')">Abrir Gemini</button>
+                        <button class="btn btn-chatgpt" onclick="abrirIA('chatgpt')">Abrir ChatGPT</button>
+                        <button class="btn btn-deepseek" onclick="abrirIA('deepseek')">Abrir DeepSeek</button>
+                        <button class="btn btn-claude" onclick="abrirIA('claude')">Abrir Claude</button>
+                        <button class="btn btn-perplexity" onclick="abrirIA('perplexity')">Abrir Perplexity</button>
+                        <button class="btn btn-manus" onclick="abrirIA('manus')">Abrir Manus</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -147,22 +160,65 @@
         // Detectar se é dispositivo touch
         const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
         
+        // Função para gerar prompt
+        async function gerarPrompt(tipo) {
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const outputPrompt = document.getElementById('outputPrompt');
+            const botoesAcoes = document.getElementById('botoesAcoes');
+            
+            // Mostrar indicador de carregamento
+            loadingIndicator.style.display = 'block';
+            outputPrompt.value = '';
+            botoesAcoes.style.display = 'none';
+            
+            try {
+                const categoria = 'medicina';
+                
+                const resp = await fetch('/gerar_prompt', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({categoria, tipo, texto: ''})
+                });
+                const json = await resp.json();
+                
+                // Esconder indicador de carregamento
+                loadingIndicator.style.display = 'none';
+                
+                // Mostrar resultado
+                outputPrompt.value = json.prompt;
+                botoesAcoes.style.display = 'flex';
+                
+            } catch (error) {
+                loadingIndicator.style.display = 'none';
+                alert('Erro ao gerar prompt. Tente novamente.');
+            }
+        }
+        
         // Inicialização
         document.addEventListener('DOMContentLoaded', function() {
+            // Gerar prompt inicial para o card selecionado
+            gerarPrompt(tipoSelecionado);
+            
             // Adicionar evento de clique aos cards
             document.querySelectorAll('.tipo-card').forEach(card => {
                 // Eventos de clique/touch
                 card.addEventListener('click', function(e) {
                     e.preventDefault();
+                    
                     // Remover seleção anterior
                     document.querySelectorAll('.tipo-card').forEach(c => {
                         c.classList.remove('selected');
                         c.classList.remove('show-tooltip');
                     });
+                    
                     // Adicionar seleção ao card clicado
                     this.classList.add('selected');
+                    
                     // Atualizar tipo selecionado
                     tipoSelecionado = this.getAttribute('data-tipo');
+                    
+                    // Gerar prompt automaticamente
+                    gerarPrompt(tipoSelecionado);
                 });
                 
                 // Eventos para tooltip em dispositivos touch
@@ -207,32 +263,6 @@
                 });
             }
         });
-
-        // Função para gerar prompt
-        document.getElementById('btnGerar').onclick = async function() {
-            // Adicionar feedback visual
-            this.disabled = true;
-            this.textContent = 'Gerando...';
-            
-            try {
-                const categoria = 'medicina';
-                const tipo = tipoSelecionado;
-                
-                const resp = await fetch('/gerar_prompt', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({categoria, tipo, texto: ''})
-                });
-                const json = await resp.json();
-                document.getElementById('outputPrompt').value = json.prompt;
-                document.getElementById('botoesAcoes').style.display = 'flex';
-            } catch (error) {
-                alert('Erro ao gerar prompt. Tente novamente.');
-            } finally {
-                this.disabled = false;
-                this.textContent = 'Gerar Prompt';
-            }
-        };
 
         // Função para copiar prompt
         document.getElementById('btnCopiar').onclick = async function() {
@@ -290,38 +320,6 @@
                 e.target.style.fontSize = '16px';
             }
         });
-        
-        // Função para copiar URL
-        async function copiarIP(elemento) {
-            const texto = elemento.textContent;
-            try {
-                if (navigator.clipboard && window.isSecureContext) {
-                    await navigator.clipboard.writeText(texto);
-                } else {
-                    // Fallback para dispositivos mais antigos
-                    const textArea = document.createElement('textarea');
-                    textArea.value = texto;
-                    document.body.appendChild(textArea);
-                    textArea.select();
-                    document.execCommand('copy');
-                    document.body.removeChild(textArea);
-                }
-                
-                // Feedback visual
-                const originalText = elemento.textContent;
-                elemento.textContent = 'Copiado!';
-                elemento.style.background = '#d4edda';
-                
-                setTimeout(() => {
-                    elemento.textContent = originalText;
-                    elemento.style.background = '#f8f9fa';
-                }, 1500);
-                
-            } catch (err) {
-                console.error('Erro ao copiar:', err);
-                alert('Erro ao copiar. Selecione e copie manualmente.');
-            }
-        }
     </script>
 </body>
 </html>
