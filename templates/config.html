@@ -99,27 +99,37 @@
         async function carregarListaPrompts() {
             try {
                 const response = await fetch('/api/prompts/medicina');
-                const prompts = await response.json();
+                if (!response.ok) {
+                    throw new Error(`Erro HTTP: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // Verificar se a resposta contém a propriedade 'prompts'
+                if (!data || !data.prompts) {
+                    throw new Error('Formato de resposta inválido');
+                }
                 
                 const promptList = document.getElementById('promptList');
                 promptList.innerHTML = '';
                 
-                prompts.forEach(prompt => {
+                data.prompts.forEach(prompt => {
                     const item = document.createElement('div');
                     item.className = 'prompt-item';
                     item.textContent = prompt.nome;
-                    item.setAttribute('data-arquivo', prompt.arquivo);
+                    item.setAttribute('data-tipo', prompt.tipo); // Corrigido: usar 'tipo' em vez de 'arquivo'
                     
-                    item.addEventListener('click', () => selecionarPrompt(prompt.arquivo));
+                    item.addEventListener('click', () => selecionarPrompt(prompt.tipo)); // Corrigido: usar 'tipo' em vez de 'arquivo'
                     promptList.appendChild(item);
                 });
             } catch (error) {
                 console.error('Erro ao carregar prompts:', error);
-                alert('Erro ao carregar a lista de prompts.');
+                alert(`Erro ao carregar a lista de prompts: ${error.message}`);
+                document.getElementById('promptList').innerHTML = '<div class="p-3 text-danger">Erro ao carregar prompts. Tente novamente mais tarde.</div>';
             }
         }
 
-        async function selecionarPrompt(arquivo) {
+        async function selecionarPrompt(tipo) {
             try {
                 // Remover seleção anterior
                 document.querySelectorAll('.prompt-item').forEach(item => {
@@ -127,24 +137,33 @@
                 });
                 
                 // Selecionar o item atual
-                const itemAtual = document.querySelector(`[data-arquivo="${arquivo}"]`);
+                const itemAtual = document.querySelector(`[data-tipo="${tipo}"]`); // Corrigido: usar 'data-tipo' em vez de 'data-arquivo'
                 if (itemAtual) itemAtual.classList.add('active');
                 
                 // Carregar conteúdo do prompt
-                const response = await fetch(`/api/prompt/medicina/${arquivo}`);
+                const response = await fetch(`/api/prompt/medicina/${tipo}`);
+                if (!response.ok) {
+                    throw new Error(`Erro HTTP: ${response.status}`);
+                }
+                
                 const dados = await response.json();
                 
+                // Verificar se a resposta contém a propriedade 'conteudo'
+                if (!dados || !dados.conteudo) {
+                    throw new Error('Formato de resposta inválido');
+                }
+                
                 // Atualizar editor
-                document.getElementById('promptTitle').textContent = dados.nome;
+                document.getElementById('promptTitle').textContent = tipo.replace('_', ' ').charAt(0).toUpperCase() + tipo.replace('_', ' ').slice(1);
                 document.getElementById('promptEditor').value = dados.conteudo;
                 document.getElementById('btnSalvar').disabled = false;
                 
                 // Armazenar informações do prompt atual
-                promptAtual = arquivo;
+                promptAtual = tipo;
                 conteudoOriginal = dados.conteudo;
             } catch (error) {
                 console.error('Erro ao carregar prompt:', error);
-                alert('Erro ao carregar o conteúdo do prompt.');
+                alert(`Erro ao carregar o conteúdo do prompt: ${error.message}`);
             }
         }
 
