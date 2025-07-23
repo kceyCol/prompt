@@ -1,8 +1,9 @@
 from flask import Flask, render_template, request, jsonify
 import os
 from werkzeug.utils import secure_filename
-import fitz  # PyMuPDF
+# Removido: import fitz  # PyMuPDF
 from io import BytesIO
+import socket
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
@@ -45,53 +46,13 @@ def carregar_prompt(categoria, tipo):
     # Se o arquivo não existir, retorna None
     return None
 
-def extrair_texto_pdf(arquivo_pdf):
-    """Extrai texto de um arquivo PDF usando PyMuPDF"""
-    try:
-        # Abrir o PDF com PyMuPDF
-        documento = fitz.open(stream=arquivo_pdf.read(), filetype="pdf")
-        texto_completo = ""
-        
-        # Extrair texto de cada página
-        for pagina in documento:
-            texto_completo += pagina.get_text() + "\n"
-        
-        documento.close()
-        return texto_completo.strip()
-    except Exception as e:
-        return f"Erro ao extrair texto do PDF: {str(e)}"
+# Removida função extrair_texto_pdf
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
-@app.route('/upload_pdf', methods=['POST'])
-def upload_pdf():
-    if 'arquivo' not in request.files:
-        return jsonify({'erro': 'Nenhum arquivo foi enviado'}), 400
-    
-    arquivo = request.files['arquivo']
-    
-    if arquivo.filename == '':
-        return jsonify({'erro': 'Nenhum arquivo selecionado'}), 400
-    
-    if arquivo and arquivo.filename.lower().endswith('.pdf'):
-        try:
-            # Extrair texto diretamente do arquivo
-            texto_extraido = extrair_texto_pdf(arquivo)
-            
-            if texto_extraido.startswith("Erro"):
-                return jsonify({'erro': texto_extraido}), 500
-            
-            return jsonify({
-                'sucesso': True,
-                'texto': texto_extraido,
-                'nome_arquivo': arquivo.filename
-            })
-        except Exception as e:
-            return jsonify({'erro': f'Erro ao processar PDF: {str(e)}'}), 500
-    else:
-        return jsonify({'erro': 'Apenas arquivos PDF são aceitos'}), 400
+# Removida rota /upload_pdf
 
 @app.route('/gerar_prompt', methods=['POST'])
 def gerar_prompt():
@@ -107,91 +68,103 @@ def gerar_prompt():
         prompt_base = "Faça um resumo do texto a seguir."
         print(f"Aviso: Prompt não encontrado para {categoria}/{tipo}. Usando prompt padrão.")
     
-    prompt_gerado = f"{prompt_base}\n\n[Insira aqui o texto a ser resumido ou anexe o arquivo PDF]"
+    prompt_gerado = f"{prompt_base}\n\n[Insira aqui o texto a ser resumido]"
     
     return jsonify({'prompt': prompt_gerado})
 
-@app.route('/config')  
+@app.route('/config')
 def config():
     return render_template('config.html')
 
 @app.route('/api/prompts/<categoria>')
 def listar_prompts(categoria):
-    # Verificar se a categoria existe
+    """Lista todos os prompts disponíveis para uma categoria"""
     if categoria not in PROMPTS_TIPOS:
         return jsonify({'erro': 'Categoria não encontrada'}), 404
     
-    # Obter lista de arquivos de prompt na categoria
-    pasta_categoria = os.path.join(app.config['PROMPTS_FOLDER'], categoria)
     prompts = []
-    
     for tipo in PROMPTS_TIPOS[categoria]:
-        arquivo = f"{tipo}.txt"
-        caminho_completo = os.path.join(pasta_categoria, arquivo)
-        
-        if os.path.exists(caminho_completo):
-            # Formatar o nome para exibição (substituir _ por espaço e capitalizar)
-            nome_exibicao = tipo.replace('_', ' ').title()
-            prompts.append({
-                'nome': nome_exibicao,
-                'arquivo': tipo
-            })
+        caminho_arquivo = os.path.join(app.config['PROMPTS_FOLDER'], categoria, f"{tipo}.txt")
+        existe = os.path.exists(caminho_arquivo)
+        prompts.append({
+            'tipo': tipo,
+            'nome': tipo.replace('_', ' ').title(),
+            'existe': existe
+        })
     
-    return jsonify(prompts)
+    return jsonify({'prompts': prompts})
 
 @app.route('/api/prompt/<categoria>/<tipo>')
 def obter_prompt(categoria, tipo):
-    # Verificar se a categoria existe
-    if categoria not in PROMPTS_TIPOS:
-        return jsonify({'erro': 'Categoria não encontrada'}), 404
+    """Obtém o conteúdo de um prompt específico"""
+    if categoria not in PROMPTS_TIPOS or tipo not in PROMPTS_TIPOS[categoria]:
+        return jsonify({'erro': 'Prompt não encontrado'}), 404
     
-    # Verificar se o tipo existe na categoria
-    if tipo not in PROMPTS_TIPOS[categoria]:
-        return jsonify({'erro': 'Tipo de prompt não encontrado nesta categoria'}), 404
-    
-    # Carregar o conteúdo do prompt
     conteudo = carregar_prompt(categoria, tipo)
-    
     if conteudo is None:
         return jsonify({'erro': 'Arquivo de prompt não encontrado'}), 404
     
-    # Formatar o nome para exibição
-    nome_exibicao = tipo.replace('_', ' ').title()
-    
-    return jsonify({
-        'nome': nome_exibicao,
-        'arquivo': tipo,
-        'conteudo': conteudo
-    })
+    return jsonify({'conteudo': conteudo})
 
 @app.route('/api/prompt/<categoria>/<tipo>', methods=['POST'])
 def salvar_prompt(categoria, tipo):
-    # Verificar se a categoria existe
-    if categoria not in PROMPTS_TIPOS:
-        return jsonify({'erro': 'Categoria não encontrada'}), 404
+    """Salva o conteúdo de um prompt"""
+    if categoria not in PROMPTS_TIPOS or tipo not in PROMPTS_TIPOS[categoria]:
+        return jsonify({'erro': 'Prompt não encontrado'}), 404
     
-    # Verificar se o tipo existe na categoria
-    if tipo not in PROMPTS_TIPOS[categoria]:
-        return jsonify({'erro': 'Tipo de prompt não encontrado nesta categoria'}), 404
-    
-    # Obter o conteúdo enviado
     dados = request.json
-    if not dados or 'conteudo' not in dados:
-        return jsonify({'erro': 'Conteúdo não fornecido'}), 400
+    conteudo = dados.get('conteudo', '')
     
-    conteudo = dados['conteudo']
-    
-    # Caminho do arquivo
     caminho_arquivo = os.path.join(app.config['PROMPTS_FOLDER'], categoria, f"{tipo}.txt")
     
     try:
-        # Salvar o conteúdo no arquivo
+        # Criar diretório se não existir
+        os.makedirs(os.path.dirname(caminho_arquivo), exist_ok=True)
+        
         with open(caminho_arquivo, 'w', encoding='utf-8') as arquivo:
             arquivo.write(conteudo)
         
-        return jsonify({'sucesso': True})
+        return jsonify({'sucesso': True, 'mensagem': 'Prompt salvo com sucesso'})
     except Exception as e:
-        return jsonify({'erro': f'Erro ao salvar arquivo: {str(e)}'}), 500
+        return jsonify({'erro': f'Erro ao salvar prompt: {str(e)}'}), 500
+
+@app.route('/api/server-info')
+def server_info():
+    """Retorna informações do servidor"""
+    try:
+        hostname = socket.gethostname()
+        local_ip = socket.gethostbyname(hostname)
+        
+        # Tentar obter informações de rede mais detalhadas
+        interfaces = []
+        try:
+            import netifaces
+            for interface in netifaces.interfaces():
+                addrs = netifaces.ifaddresses(interface)
+                if netifaces.AF_INET in addrs:
+                    for addr in addrs[netifaces.AF_INET]:
+                        ip = addr['addr']
+                        if not ip.startswith('127.') and not ip.startswith('169.254.'):
+                            interfaces.append({
+                                'interface': interface,
+                                'ip': ip
+                            })
+        except ImportError:
+            # netifaces não está disponível
+            pass
+        
+        return jsonify({
+            'hostname': hostname,
+            'local_ip': local_ip,
+            'interfaces': interfaces
+        })
+    except Exception as e:
+        return jsonify({
+            'hostname': 'unknown',
+            'local_ip': 'localhost',
+            'interfaces': [],
+            'error': str(e)
+        })
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=5000)

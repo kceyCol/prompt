@@ -85,3 +85,113 @@
     visibility: visible;
     opacity: 1;
 }
+
+
+/* Melhorias para mobile */
+@media (max-width: 768px) {
+    .tipo-card {
+        margin-bottom: 1rem;
+    }
+    
+    .card-tooltip .tooltip-text {
+        width: 200px;
+        margin-left: -100px;
+        font-size: 0.8rem;
+    }
+    
+    #botoesAcoes {
+        flex-direction: column;
+    }
+    
+    #botoesAcoes .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* Suporte para touch devices */
+.tipo-card:active {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+    background-color: #e9ecef;
+}
+
+/* Melhor feedback visual para botões em mobile */
+.btn:active {
+    transform: scale(0.98);
+}
+
+/* Tooltip para touch devices */
+.card-tooltip.show-tooltip .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
+
+
+/* Botão de configurações mais chamativo */
+.btn-config {
+    background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+    border: none;
+    color: white;
+    font-weight: bold;
+    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+    transition: all 0.3s ease;
+}
+
+.btn-config:hover {
+    background: linear-gradient(45deg, #ee5a24, #ff6b6b);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+    color: white;
+}
+
+.btn-config:active {
+    transform: translateY(0);
+}
+
+/* Estilo para informações de IP */
+.ip-info {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 0.85rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.ip-item {
+    margin-bottom: 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ip-label {
+    font-weight: 600;
+    color: #495057;
+}
+
+.ip-value {
+    font-family: 'Courier New', monospace;
+    background: #f8f9fa;
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: #0d6efd;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.ip-value:hover {
+    background: #e9ecef;
+}
+
+@media (max-width: 768px) {
+    .header-info {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .ip-info {
+        width: 100%;
+    }
+}

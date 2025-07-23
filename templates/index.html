@@ -5,13 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gerador de Prompts IA</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css" rel="stylesheet">
     <link href="{{ url_for('static', filename='estilos.css') }}" rel="stylesheet">
 </head>
 <body class="bg-light">
     <div class="container py-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex justify-content-between align-items-start mb-4 header-info">
             <h1>PromptMaker</h1>
-            <a href="/config" class="btn btn-outline-primary"><i class="bi bi-gear"></i> Configurações</a>
+            <div class="d-flex gap-3 align-items-start">
+                <!-- URL Local -->
+                <div class="ip-info">
+                    <div class="ip-item">
+                        <span class="ip-label">URL Local:</span>
+                        <span class="ip-value" id="urlLocal" onclick="copiarIP(this)">http://131.161.61.55:5000</span>
+                    </div>
+                </div>
+                <!-- Botão de configurações -->
+                <a href="/config" class="btn btn-config">
+                    <i class="bi bi-gear-fill"></i> Configurações
+                </a>
+            </div>
         </div>
         <h1 class="mb-4 text-center">Gerador de Prompts para Resumos Médicos</h1>
         
@@ -130,19 +143,49 @@
         };
         
         let tipoSelecionado = 'artigo_cientifico';
+        let tooltipTimeout;
+        
+        // Detectar se é dispositivo touch
+        const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
         
         // Inicialização
         document.addEventListener('DOMContentLoaded', function() {
             // Adicionar evento de clique aos cards
             document.querySelectorAll('.tipo-card').forEach(card => {
-                card.addEventListener('click', function() {
+                // Eventos de clique/touch
+                card.addEventListener('click', function(e) {
+                    e.preventDefault();
                     // Remover seleção anterior
-                    document.querySelectorAll('.tipo-card').forEach(c => c.classList.remove('selected'));
+                    document.querySelectorAll('.tipo-card').forEach(c => {
+                        c.classList.remove('selected');
+                        c.classList.remove('show-tooltip');
+                    });
                     // Adicionar seleção ao card clicado
                     this.classList.add('selected');
                     // Atualizar tipo selecionado
                     tipoSelecionado = this.getAttribute('data-tipo');
                 });
+                
+                // Eventos para tooltip em dispositivos touch
+                if (isTouchDevice) {
+                    card.addEventListener('touchstart', function(e) {
+                        // Limpar timeout anterior
+                        clearTimeout(tooltipTimeout);
+                        
+                        // Remover tooltips de outros cards
+                        document.querySelectorAll('.tipo-card').forEach(c => {
+                            if (c !== this) c.classList.remove('show-tooltip');
+                        });
+                        
+                        // Mostrar tooltip do card atual
+                        this.classList.add('show-tooltip');
+                        
+                        // Esconder tooltip após 3 segundos
+                        tooltipTimeout = setTimeout(() => {
+                            this.classList.remove('show-tooltip');
+                        }, 3000);
+                    });
+                }
                 
                 // Inicializar tooltips a partir do atributo data-descricao
                 const descricao = card.getAttribute('data-descricao');
@@ -153,36 +196,131 @@
                     }
                 }
             });
+            
+            // Esconder tooltip ao tocar fora (apenas para dispositivos touch)
+            if (isTouchDevice) {
+                document.addEventListener('touchstart', function(e) {
+                    if (!e.target.closest('.tipo-card')) {
+                        document.querySelectorAll('.tipo-card').forEach(c => {
+                            c.classList.remove('show-tooltip');
+                        });
+                    }
+                });
+            }
         });
 
+        // Função para gerar prompt
         document.getElementById('btnGerar').onclick = async function() {
-            const categoria = 'medicina';
-            const tipo = tipoSelecionado;
+            // Adicionar feedback visual
+            this.disabled = true;
+            this.textContent = 'Gerando...';
             
-            const resp = await fetch('/gerar_prompt', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({categoria, tipo, texto: ''})
-            });
-            const json = await resp.json();
-            document.getElementById('outputPrompt').value = json.prompt;
-            document.getElementById('botoesAcoes').style.display = 'flex';
+            try {
+                const categoria = 'medicina';
+                const tipo = tipoSelecionado;
+                
+                const resp = await fetch('/gerar_prompt', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({categoria, tipo, texto: ''})
+                });
+                const json = await resp.json();
+                document.getElementById('outputPrompt').value = json.prompt;
+                document.getElementById('botoesAcoes').style.display = 'flex';
+            } catch (error) {
+                alert('Erro ao gerar prompt. Tente novamente.');
+            } finally {
+                this.disabled = false;
+                this.textContent = 'Gerar Prompt';
+            }
         };
 
-        document.getElementById('btnCopiar').onclick = function() {
+        // Função para copiar prompt
+        document.getElementById('btnCopiar').onclick = async function() {
             const textarea = document.getElementById('outputPrompt');
-            textarea.select();
-            document.execCommand('copy');
-            this.textContent = 'Copiado!';
-            setTimeout(() => {
-                this.textContent = 'Copiar Prompt';
-            }, 2000);
+            
+            try {
+                // Usar a API moderna de clipboard se disponível
+                if (navigator.clipboard && window.isSecureContext) {
+                    await navigator.clipboard.writeText(textarea.value);
+                    this.textContent = 'Copiado!';
+                } else {
+                    // Fallback para dispositivos mais antigos
+                    textarea.select();
+                    textarea.setSelectionRange(0, 99999); // Para mobile
+                    
+                    const successful = document.execCommand('copy');
+                    if (successful) {
+                        this.textContent = 'Copiado!';
+                    } else {
+                        // Se falhar, mostrar o texto selecionado para cópia manual
+                        alert('Selecione e copie o texto manualmente (Ctrl+C ou Cmd+C)');
+                        return;
+                    }
+                }
+                
+                setTimeout(() => {
+                    this.textContent = 'Copiar Prompt';
+                }, 2000);
+            } catch (err) {
+                // Em caso de erro, selecionar o texto para cópia manual
+                textarea.select();
+                textarea.setSelectionRange(0, 99999);
+                alert('Selecione e copie o texto manualmente (Ctrl+C ou Cmd+C)');
+            }
         };
 
+        // Função para abrir plataformas de IA
         function abrirIA(plataforma) {
             const url = urlsIA[plataforma];
             if (url) {
-                window.open(url, '_blank');
+                // Adicionar pequeno delay para melhor feedback em mobile
+                const button = event.target;
+                button.style.transform = 'scale(0.95)';
+                
+                setTimeout(() => {
+                    button.style.transform = '';
+                    window.open(url, '_blank');
+                }, 100);
+            }
+        }
+        
+        // Prevenir zoom em inputs em iOS
+        document.addEventListener('touchstart', function(e) {
+            if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') {
+                e.target.style.fontSize = '16px';
+            }
+        });
+        
+        // Função para copiar URL
+        async function copiarIP(elemento) {
+            const texto = elemento.textContent;
+            try {
+                if (navigator.clipboard && window.isSecureContext) {
+                    await navigator.clipboard.writeText(texto);
+                } else {
+                    // Fallback para dispositivos mais antigos
+                    const textArea = document.createElement('textarea');
+                    textArea.value = texto;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                }
+                
+                // Feedback visual
+                const originalText = elemento.textContent;
+                elemento.textContent = 'Copiado!';
+                elemento.style.background = '#d4edda';
+                
+                setTimeout(() => {
+                    elemento.textContent = originalText;
+                    elemento.style.background = '#f8f9fa';
+                }, 1500);
+                
+            } catch (err) {
+                console.error('Erro ao copiar:', err);
+                alert('Erro ao copiar. Selecione e copie manualmente.');
             }
         }
     </script>
